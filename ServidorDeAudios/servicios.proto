@@ -1,0 +1,27 @@
+syntax = "proto3";
+
+package servicios;
+option go_package = "/serviciosCancion";
+
+service serviciosCanciones {
+  rpc buscarAudio(PeticionDTO) returns (RespuestaMetadataAudioDTO);
+}
+
+message PeticionDTO {
+  string titulo = 1;
+}
+
+message MetadataAudio {
+  string Titulo = 3;    
+  int32 Duracion = 4;    
+  string Tipo = 5;        
+  bool Disponible = 6; 
+}
+
+message RespuestaMetadataAudioDTO {
+  string mensaje = 1;
+  int32 codigo =2;  
+  MetadataAudio ObjAudio=3;
+}
+
+
