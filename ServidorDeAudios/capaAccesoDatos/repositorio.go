@@ -1,6 +1,6 @@
 package capaAccesoDatos
 
-import "servidor.local/grpc-servidor/modelos"
+import "servidor.local/servidorDeAudios/modelos"
 
 var tiposAudio = []modelos.TipoAudio{}
 var musicas = []modelos.Musica{}
@@ -62,7 +62,7 @@ func cargarPodcasts() {
 	p1 := modelos.Podcast{}
 	p1.SetIdAudio(201)
 	p1.SetTituloPodcast("Lex Fridman Podcast")
-	p1.SetTituloEpisodio("Elon Musk: War, AI, Aliens")
+	p1.SetTituloEpisodio("Elon Musk War, AI, Aliens")
 	p1.SetAnfitrion("Lex Fridman")
 	p1.SetTemporadaEpisodio("EP 400")
 	p1.SetNotasShow("Conversación sobre el futuro de la humanidad")

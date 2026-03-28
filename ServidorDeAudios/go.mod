@@ -1,4 +1,4 @@
-module servidor.local/grpc-servidor
+module servidor.local/servidorDeAudios
 
 go 1.24.0
 

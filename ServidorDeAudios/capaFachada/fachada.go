@@ -3,8 +3,8 @@ package capaFachada
 import (
 	"fmt"
 
-	repo "servidor.local/grpc-servidor/capaAccesoDatos"
-	"servidor.local/grpc-servidor/modelos"
+	repo "servidor.local/servidorDeAudios/capaAccesoDatos"
+	"servidor.local/servidorDeAudios/modelos"
 )
 
 func ObtenerTipos() []modelos.TipoAudio {

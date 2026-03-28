@@ -3,9 +3,9 @@ package capaControladores
 import (
 	"context"
 
-	fachada "servidor.local/grpc-servidor/capaFachada"
-	"servidor.local/grpc-servidor/modelos"
-	pb "servidor.local/grpc-servidor/serviciosAudio"
+	fachada "servidor.local/servidorDeAudios/capaFachada"
+	"servidor.local/servidorDeAudios/modelos"
+	pb "servidor.local/servidorDeAudios/serviciosAudio"
 )
 
 type ControladorAudios struct {

@@ -6,8 +6,8 @@ import (
 	"net"
 
 	"google.golang.org/grpc"
-	controladores "servidor.local/grpc-servidor/capaControladores"
-	pb "servidor.local/grpc-servidor/serviciosAudio"
+	controladores "servidor.local/servidorDeAudios/capaControladores"
+	pb "servidor.local/servidorDeAudios/serviciosAudio"
 )
 
 func main() {
