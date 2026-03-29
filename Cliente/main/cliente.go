@@ -1,15 +1,13 @@
 package main
 
 import (
-	"context"
 	"fmt"
 	"log"
-	"time"
 
 	"google.golang.org/grpc"
-	vistas "cliente.local/grpc-cliente/vistas"
-	pbAudios   "servidor.local/servidorDeAudios/serviciosAudio"
-	pbStreaming "servidor.local/servidorStreaming/serviciosAudio"
+	vistas      "cliente.local/grpc-cliente/vistas"
+	pbAudios    "servidor.local/servidorDeAudios/serviciosAudio"
+	pbStreaming  "servidor.local/servidorStreaming/serviciosAudio"
 )
 
 func main() {
@@ -30,11 +28,9 @@ func main() {
 	clienteAudios   := pbAudios.NewServiciosAudioClient(connAudios)
 	clienteStreaming := pbStreaming.NewAudioServiceClient(connStreaming)
 
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
-	defer cancel()
-
 	fmt.Println("Conectado a ServidorDeAudios   (:50053)")
 	fmt.Println("Conectado a ServidorDeStreaming (:50051)")
 
-	vistas.MostrarMenuPrincipal(clienteAudios, clienteStreaming, ctx)
+	// Cada operación crea su propio contexto con timeout adecuado
+	vistas.MostrarMenuPrincipal(clienteAudios, clienteStreaming)
 }

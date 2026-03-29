@@ -9,9 +9,14 @@ import (
 	pb "servidor.local/servidorStreaming/serviciosAudio"
 )
 
-// ReproducirAudio llama al RPC AudioStream del ServidorDeStreaming y reproduce el audio recibido.
-func ReproducirAudio(cliente pb.AudioServiceClient, ctx context.Context, filename string) {
-	fmt.Printf("[Cliente -> RPC] Llamando AudioStream con filename=%s...\n", filename)
+// ReproducirAudio llama al RPC AudioStream del ServidorDeStreaming y reproduce el audio.
+// Usa context.Background() sin timeout para no cortar audios largos.
+func ReproducirAudio(cliente pb.AudioServiceClient, filename string) {
+	fmt.Printf("[Cliente → RPC] Llamando AudioStream con filename=%s...\n", filename)
+
+	// Sin timeout el streaming debe durar lo que dure el audio completo
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 
 	stream, err := cliente.AudioStream(ctx, &pb.AudioRequest{Filename: filename})
 	if err != nil {
@@ -23,9 +28,6 @@ func ReproducirAudio(cliente pb.AudioServiceClient, ctx context.Context, filenam
 	reader, writer := io.Pipe()
 	canalSincronizacion := make(chan struct{})
 
-	// Goroutine: decodifica y reproduce los fragmentos recibidos
 	go util.DecodificarReproducir(reader, canalSincronizacion)
-
-	// Recibe los fragmentos del servidor y los escribe en el pipe
 	util.RecibirAudio(stream, writer, canalSincronizacion)
 }

@@ -1,23 +1,20 @@
 package vistas
 
-
 import (
 	"bufio"
-	"context"
 	"fmt"
 	"os"
 	"strings"
 
 	ctrl "cliente.local/grpc-cliente/capaControladores"
-	pbAudios   "servidor.local/servidorDeAudios/serviciosAudio"
-	pbStreaming "servidor.local/servidorStreaming/serviciosAudio"
+	pbAudios    "servidor.local/servidorDeAudios/serviciosAudio"
+	pbStreaming  "servidor.local/servidorStreaming/serviciosAudio"
 )
 
 // MostrarMenuPrincipal presenta el menú raíz de la aplicación.
 func MostrarMenuPrincipal(
 	clienteAudios   pbAudios.ServiciosAudioClient,
 	clienteStreaming pbStreaming.AudioServiceClient,
-	ctx context.Context,
 ) {
 	reader := bufio.NewReader(os.Stdin)
 
@@ -35,7 +32,7 @@ func MostrarMenuPrincipal(
 
 		switch opcion {
 		case "1":
-			mostrarTipos(clienteAudios, clienteStreaming, ctx, reader)
+			mostrarTipos(clienteAudios, clienteStreaming, reader)
 		case "2":
 			fmt.Println("Hasta luego.")
 			return
@@ -49,10 +46,9 @@ func MostrarMenuPrincipal(
 func mostrarTipos(
 	clienteAudios   pbAudios.ServiciosAudioClient,
 	clienteStreaming pbStreaming.AudioServiceClient,
-	ctx context.Context,
 	reader *bufio.Reader,
 ) {
-	resp, err := ctrl.ObtenerTipos(clienteAudios, ctx)
+	resp, err := ctrl.ObtenerTipos(clienteAudios)
 	if err != nil {
 		fmt.Printf("Error al obtener tipos: %v\n", err)
 		return
@@ -81,7 +77,6 @@ func mostrarTipos(
 		return
 	}
 
-	// Validar que el id existe en la lista retornada
 	valido := false
 	for _, t := range resp.Tipos {
 		if t.Id == idTipo {
@@ -94,5 +89,5 @@ func mostrarTipos(
 		return
 	}
 
-	MostrarListaAudios(clienteAudios, clienteStreaming, ctx, idTipo, reader)
+	MostrarListaAudios(clienteAudios, clienteStreaming, idTipo, reader)
 }

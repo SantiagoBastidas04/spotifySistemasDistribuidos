@@ -2,24 +2,22 @@ package vistas
 
 import (
 	"bufio"
-	"context"
 	"fmt"
 	"strings"
 
 	ctrl "cliente.local/grpc-cliente/capaControladores"
-	pbAudios   "servidor.local/servidorDeAudios/serviciosAudio"
-	pbStreaming "servidor.local/servidorStreaming/serviciosAudio"
+	pbAudios    "servidor.local/servidorDeAudios/serviciosAudio"
+	pbStreaming  "servidor.local/servidorStreaming/serviciosAudio"
 )
 
 // MostrarListaAudios obtiene y despliega los audios de un tipo y permite seleccionar uno.
 func MostrarListaAudios(
 	clienteAudios   pbAudios.ServiciosAudioClient,
 	clienteStreaming pbStreaming.AudioServiceClient,
-	ctx context.Context,
 	idTipo int32,
 	reader *bufio.Reader,
 ) {
-	resp, err := ctrl.ObtenerAudiosPorTipo(clienteAudios, ctx, idTipo)
+	resp, err := ctrl.ObtenerAudiosPorTipo(clienteAudios, idTipo)
 	if err != nil {
 		fmt.Printf("Error al obtener audios: %v\n", err)
 		return
@@ -49,5 +47,5 @@ func MostrarListaAudios(
 	}
 
 	audioSeleccionado := resp.Audios[idx-1]
-	MostrarDetalleAudio(clienteAudios, clienteStreaming, ctx, audioSeleccionado.IdAudio, audioSeleccionado.Titulo, reader)
+	MostrarDetalleAudio(clienteAudios, clienteStreaming, audioSeleccionado.IdAudio, audioSeleccionado.Titulo, reader)
 }

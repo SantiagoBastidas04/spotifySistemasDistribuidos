@@ -2,25 +2,23 @@ package vistas
 
 import (
 	"bufio"
-	"context"
 	"fmt"
 	"strings"
 
 	ctrl "cliente.local/grpc-cliente/capaControladores"
-	pbAudios   "servidor.local/servidorDeAudios/serviciosAudio"
-	pbStreaming "servidor.local/servidorStreaming/serviciosAudio"
+	pbAudios    "servidor.local/servidorDeAudios/serviciosAudio"
+	pbStreaming  "servidor.local/servidorStreaming/serviciosAudio"
 )
 
-// MostrarDetalleAudio obtiene y muestra los metadatos completos del audio seleccionado.
+// MostrarDetalleAudio 
 func MostrarDetalleAudio(
 	clienteAudios   pbAudios.ServiciosAudioClient,
 	clienteStreaming pbStreaming.AudioServiceClient,
-	ctx context.Context,
 	idAudio int32,
 	tituloAudio string,
 	reader *bufio.Reader,
 ) {
-	resp, err := ctrl.ObtenerMetadata(clienteAudios, ctx, idAudio)
+	resp, err := ctrl.ObtenerMetadata(clienteAudios, idAudio)
 	if err != nil {
 		fmt.Printf("Error al obtener metadatos: %v\n", err)
 		return
@@ -43,7 +41,7 @@ func MostrarDetalleAudio(
 
 		switch opcion {
 		case "1":
-			ctrl.ReproducirAudio(clienteStreaming, ctx, tituloAudio)
+			ctrl.ReproducirAudio(clienteStreaming, tituloAudio)
 		case "2":
 			return
 		default:
@@ -52,7 +50,7 @@ func MostrarDetalleAudio(
 	}
 }
 
-// imprimirMetadato muestra los campos según el tipo concreto del oneof.
+// imprimirMetadato 
 func imprimirMetadato(resp *pbAudios.RespuestaMetadata) {
 	switch m := resp.Metadato.(type) {
 
