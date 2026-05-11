@@ -19,12 +19,12 @@ func MostrarMenuPrincipal(
 	reader := bufio.NewReader(os.Stdin)
 
 	for {
-		fmt.Println("\n╔══════════════════════════════════╗")
-		fmt.Println("║   Sistema de Audio Distribuido   ║")
-		fmt.Println("╠══════════════════════════════════╣")
-		fmt.Println("║  1. Ver tipos de audio           ║")
-		fmt.Println("║  2. Salir                        ║")
-		fmt.Println("╚══════════════════════════════════╝")
+		fmt.Println("\n|==================================|")
+		fmt.Println("|   Sistema de Audio Distribuido   |")
+		fmt.Println("|==================================|")
+		fmt.Println("|  1. Ver tipos de audio           |")
+		fmt.Println("|  2. Salir                        |")
+		fmt.Println("|==================================|")
 		fmt.Print("Seleccione una opción: ")
 
 		opcion, _ := reader.ReadString('\n')

@@ -9,7 +9,7 @@ service AudioService {
 }
 
 message AudioRequest {
-  string filename = 1; // Título del audio (coincide con el nombre del .mp3)
+  string filename = 1; 
 }
 
 message AudioChunk {

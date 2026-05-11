@@ -5,6 +5,7 @@ import (
 
 	repo "servidor.local/servidorDeAudios/capaAccesoDatos"
 	"servidor.local/servidorDeAudios/modelos"
+	cola "servidor.local/servidorDeAudios/componenteConexionCola"
 )
 
 func ObtenerTipos() []modelos.TipoAudio {
@@ -64,4 +65,50 @@ func ObtenerMetadata(idAudio int) (interface{}, int, error) {
 	default:
 		return nil, -1, fmt.Errorf("audio con id %d no encontrado", idAudio)
 	}
+}
+func AlmacenarCancion(titulo, artista, genero string, data []byte) (int, error) {
+    fmt.Printf("[Fachada] AlmacenarCancion titulo=%s artista=%s genero=%s\n", titulo, artista, genero)
+
+    // Paso 1: guardar el archivo MP3 en disco
+    if err := repo.GuardarArchivoFisico(titulo, artista, genero, data); err != nil {
+        return 0, fmt.Errorf("error guardando archivo: %w", err)
+    }
+
+    // Paso 2: registrar metadatos en memoria para que el gRPC los sirva
+    nuevaMusica := modelos.Musica{}
+    nuevaMusica.SetTitulo(titulo)
+    nuevaMusica.SetArtistaPrincipal(artista)
+    nuevaMusica.SetGeneroMusical(genero)
+    nuevaMusica.SetAlbum("Sin álbum")
+    nuevaMusica.SetSelloDiscografico("Independiente")
+    nuevaMusica.SetAnioLanzamiento(0)
+    idAsignado := repo.AgregarMusica(nuevaMusica)
+
+    fmt.Printf("[Fachada] Audio registrado en memoria con id=%d\n", idAsignado)
+
+    // Paso 3: notificar asíncronamente al servidor de correos vía RabbitMQ
+    go publicarEnCola(idAsignado, titulo, artista, genero)
+
+    return idAsignado, nil
+}
+
+// publicarEnCola crea una conexión RabbitMQ, publica la notificación y la cierra.
+// Se ejecuta en una goroutine para no bloquear la respuesta al Administrador.
+func publicarEnCola(idAudio int, titulo, artista, genero string) {
+    publisher, err := cola.NewRabbitPublisher()
+    if err != nil {
+        fmt.Printf("[Fachada] Error conectando RabbitMQ: %v\n", err)
+        return
+    }
+    defer publisher.Cerrar()
+
+    err = publisher.PublicarNotificacion(cola.NotificacionCancion{
+        IdAudio: idAudio,
+        Titulo:  titulo,
+        Artista: artista,
+        Genero:  genero,
+    })
+    if err != nil {
+        fmt.Printf("[Fachada] Error publicando en cola: %v\n", err)
+    }
 }

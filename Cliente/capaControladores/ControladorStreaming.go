@@ -12,7 +12,7 @@ import (
 // ReproducirAudio llama al RPC AudioStream del ServidorDeStreaming y reproduce el audio.
 // Usa context.Background() sin timeout para no cortar audios largos.
 func ReproducirAudio(cliente pb.AudioServiceClient, filename string) {
-	fmt.Printf("[Cliente → RPC] Llamando AudioStream con filename=%s...\n", filename)
+	fmt.Printf("[Cliente -> RPC] Llamando AudioStream con filename=%s...\n", filename)
 
 	// Sin timeout el streaming debe durar lo que dure el audio completo
 	ctx, cancel := context.WithCancel(context.Background())

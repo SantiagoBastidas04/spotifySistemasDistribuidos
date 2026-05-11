@@ -1,12 +1,18 @@
 package capaAccesoDatos
 
-import "servidor.local/servidorDeAudios/modelos"
+import (
+    "servidor.local/servidorDeAudios/modelos"
+    "sync"
+)
 
 var tiposAudio = []modelos.TipoAudio{}
 var musicas = []modelos.Musica{}
 var podcasts = []modelos.Podcast{}
 var audiolibros = []modelos.Audiolibro{}
 var ruidosBlancos = []modelos.RuidoBlanco{}
+var mu sync.Mutex
+var proximoIdMusica = 500
+
 
 func init() {
 	cargarTipos()
@@ -206,17 +212,30 @@ func ObtenerRuidoBlanco(idAudio int) (modelos.RuidoBlanco, bool) {
 }
 
 func ObtenerTipoPorAudio(idAudio int) int {
-	if idAudio >= 101 && idAudio <= 199 {
-		return 1
-	}
-	if idAudio >= 201 && idAudio <= 299 {
-		return 2
-	}
-	if idAudio >= 301 && idAudio <= 399 {
-		return 3
-	}
-	if idAudio >= 401 && idAudio <= 499 {
-		return 4
-	}
-	return -1
+    if idAudio >= 101 && idAudio <= 199 {
+        return 1
+    }
+    if idAudio >= 201 && idAudio <= 299 {
+        return 2
+    }
+    if idAudio >= 301 && idAudio <= 399 {
+        return 3
+    }
+    if idAudio >= 401 && idAudio <= 499 {
+        return 4
+    }
+
+    if idAudio >= 500 {
+        return 1
+    }
+    return -1
+}
+
+func AgregarMusica(m modelos.Musica) int {
+    mu.Lock()
+    defer mu.Unlock()
+    proximoIdMusica++
+    m.SetIdAudio(proximoIdMusica)
+    musicas = append(musicas, m)
+    return proximoIdMusica
 }
