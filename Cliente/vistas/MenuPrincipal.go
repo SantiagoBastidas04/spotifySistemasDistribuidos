@@ -18,6 +18,11 @@ func MostrarMenuPrincipal(
 ) {
 	reader := bufio.NewReader(os.Stdin)
 
+    if !iniciarSesion(reader) {
+        fmt.Println("Credenciales incorrectas. Saliendo.")
+        return
+    }
+
 	for {
 		fmt.Println("\n|==================================|")
 		fmt.Println("|   Sistema de Audio Distribuido   |")
@@ -90,4 +95,27 @@ func mostrarTipos(
 	}
 
 	MostrarListaAudios(clienteAudios, clienteStreaming, idTipo, reader)
+}
+func iniciarSesion(reader *bufio.Reader) bool {
+    // Usuarios hardcodeados para la demo
+    usuarios := map[string]string{
+        "cliente1": "pass1",
+        "cliente2": "pass2",
+    }
+
+    fmt.Println("\n===== INICIO DE SESIÓN =====")
+    fmt.Print("Nickname: ")
+    nickname, _ := reader.ReadString('\n')
+    nickname = strings.TrimSpace(nickname)
+
+    fmt.Print("Contraseña: ")
+    password, _ := reader.ReadString('\n')
+    password = strings.TrimSpace(password)
+
+    pass, existe := usuarios[nickname]
+    if !existe || pass != password {
+        return false
+    }
+    fmt.Printf("Bienvenido, %s!\n", nickname)
+    return true
 }

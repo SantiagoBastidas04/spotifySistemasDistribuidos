@@ -13,7 +13,10 @@ import (
 	pb "servidor.local/servidorStreaming/serviciosAudio"
 )
 
-const urlCallbackAdmin = "http://localhost:8080/callback/reproduccion"
+var urlsAdministradores = []string{
+    "http://localhost:8080/callback/reproduccion",
+    "http://localhost:8081/callback/reproduccion",
+}
 
 type notificacionReproduccion struct {
 	IdAudio         string `json:"idAudio"`
@@ -56,21 +59,25 @@ func EnviarFragmentosAudio(titulo string, stream pb.AudioService_AudioStreamServ
 	return nil
 }
 
+
+
 func notificarReproduccion(tituloAudio string) {
-	notificacion := notificacionReproduccion{
-		IdAudio:         tituloAudio,
-		FechaHoraReprod: time.Now().Format("2006-01-02 15:04:05"),
-	}
-	body, err := json.Marshal(notificacion)
-	if err != nil {
-		log.Printf("[Callback] Error serializando notificación: %v", err)
-		return
-	}
-	resp, err := http.Post(urlCallbackAdmin, "application/json", bytes.NewBuffer(body))
-	if err != nil {
-		log.Printf("[Callback] Error notificando al Administrador: %v", err)
-		return
-	}
-	defer resp.Body.Close()
-	log.Printf("[Callback] Administrador notificado: status=%s", resp.Status)
+    notificacion := notificacionReproduccion{
+        IdAudio:         tituloAudio,
+        FechaHoraReprod: time.Now().Format("2006-01-02 15:04:05"),
+    }
+    body, err := json.Marshal(notificacion)
+    if err != nil {
+        log.Printf("[Callback] Error serializando notificación: %v", err)
+        return
+    }
+    for _, url := range urlsAdministradores {
+        resp, err := http.Post(url, "application/json", bytes.NewBuffer(body))
+        if err != nil {
+            log.Printf("[Callback] Error notificando a %s: %v", url, err)
+            continue
+        }
+        resp.Body.Close()
+        log.Printf("[Callback] Administrador notificado en %s: status=%s", url, resp.Status)
+    }
 }

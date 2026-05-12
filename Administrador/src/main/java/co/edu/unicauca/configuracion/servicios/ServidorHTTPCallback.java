@@ -6,6 +6,7 @@ import java.io.InputStream;
 import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
 import co.edu.unicauca.capaDeControladores.RegistroAdministradores;
+import co.edu.unicauca.configuracion.lector.LectorPropiedadesConfig;
 
 
 public class ServidorHTTPCallback {
@@ -13,8 +14,8 @@ public class ServidorHTTPCallback {
     private static final int PUERTO_HTTP = 8080;
 
     public static void iniciar() throws Exception {
-        HttpServer servidor = HttpServer.create(
-                new InetSocketAddress(PUERTO_HTTP), 0);
+        int puerto = Integer.parseInt(LectorPropiedadesConfig.get("callback.puerto"));
+        HttpServer servidor = HttpServer.create(new InetSocketAddress(puerto), 0);
         servidor.createContext("/callback/reproduccion",
                 ServidorHTTPCallback::manejarCallback);
         servidor.start();
