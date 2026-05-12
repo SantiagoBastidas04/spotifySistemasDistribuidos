@@ -13,9 +13,11 @@ import (
 	pb "servidor.local/servidorStreaming/serviciosAudio"
 )
 
-var urlsAdministradores = []string{
-    "http://localhost:8080/callback/reproduccion",
-    "http://localhost:8081/callback/reproduccion",
+// puertosAdministradores lista todos los puertos donde pueden haber admins escuchando
+var puertosAdministradores = []string{
+	"http://localhost:8080/callback/reproduccion",
+	"http://localhost:8081/callback/reproduccion",
+	"http://localhost:8082/callback/reproduccion",
 }
 
 type notificacionReproduccion struct {
@@ -31,6 +33,9 @@ func EnviarFragmentosAudio(titulo string, stream pb.AudioService_AudioStreamServ
 		return fmt.Errorf("no se pudo abrir el archivo: %w", err)
 	}
 	defer archivo.Close()
+
+	// Notificar al inicio de la reproducción
+	go notificarATodosLosAdmins(titulo)
 
 	buf := make([]byte, 32*1024)
 	noFragmento := 0
@@ -53,31 +58,30 @@ func EnviarFragmentosAudio(titulo string, stream pb.AudioService_AudioStreamServ
 		}
 	}
 
-	// Notificar al Administrador de forma asíncrona
-	go notificarReproduccion(titulo)
-
 	return nil
 }
 
+// notificarATodosLosAdmins intenta notificar a cada puerto de la lista.
+// Si un admin no está corriendo en ese puerto, simplemente lo ignora.
+func notificarATodosLosAdmins(tituloAudio string) {
+	notificacion := notificacionReproduccion{
+		IdAudio:         tituloAudio,
+		FechaHoraReprod: time.Now().Format("2006-01-02 15:04:05"),
+	}
+	body, err := json.Marshal(notificacion)
+	if err != nil {
+		log.Printf("[Callback] Error serializando notificación: %v", err)
+		return
+	}
 
-
-func notificarReproduccion(tituloAudio string) {
-    notificacion := notificacionReproduccion{
-        IdAudio:         tituloAudio,
-        FechaHoraReprod: time.Now().Format("2006-01-02 15:04:05"),
-    }
-    body, err := json.Marshal(notificacion)
-    if err != nil {
-        log.Printf("[Callback] Error serializando notificación: %v", err)
-        return
-    }
-    for _, url := range urlsAdministradores {
-        resp, err := http.Post(url, "application/json", bytes.NewBuffer(body))
-        if err != nil {
-            log.Printf("[Callback] Error notificando a %s: %v", url, err)
-            continue
-        }
-        resp.Body.Close()
-        log.Printf("[Callback] Administrador notificado en %s: status=%s", url, resp.Status)
-    }
+	for _, url := range puertosAdministradores {
+		resp, err := http.Post(url, "application/json", bytes.NewBuffer(body))
+		if err != nil {
+			// Admin no está corriendo en ese puerto, se ignora silenciosamente
+			log.Printf("[Callback] Admin no disponible en %s", url)
+			continue
+		}
+		resp.Body.Close()
+		log.Printf("[Callback] Admin notificado en %s: %s", url, resp.Status)
+	}
 }

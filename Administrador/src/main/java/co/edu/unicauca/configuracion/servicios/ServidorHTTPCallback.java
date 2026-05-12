@@ -1,53 +1,86 @@
 package co.edu.unicauca.configuracion.servicios;
 
-import com.sun.net.httpserver.HttpExchange;
-import com.sun.net.httpserver.HttpServer;
-import java.io.InputStream;
-import java.net.InetSocketAddress;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.net.ServerSocket;
+import java.net.Socket;
 import java.nio.charset.StandardCharsets;
 import co.edu.unicauca.capaDeControladores.RegistroAdministradores;
-import co.edu.unicauca.configuracion.lector.LectorPropiedadesConfig;
-
 
 public class ServidorHTTPCallback {
 
-    private static final int PUERTO_HTTP = 8080;
+    // Puerto que quedó asignado a esta instancia
+    public static int puertoAsignado = -1;
 
-    public static void iniciar() throws Exception {
-        int puerto = Integer.parseInt(LectorPropiedadesConfig.get("callback.puerto"));
-        HttpServer servidor = HttpServer.create(new InetSocketAddress(puerto), 0);
-        servidor.createContext("/callback/reproduccion",
-                ServidorHTTPCallback::manejarCallback);
-        servidor.start();
-        System.out.println("[HTTP] Servidor de callbacks escuchando en :"
-                + PUERTO_HTTP);
+    public static void iniciar() {
+        // Intentar puertos desde 8080 hasta 8089
+        for (int puerto = 8080; puerto <= 8089; puerto++) {
+            try {
+                final int puertoFinal = puerto;
+                ServerSocket serverSocket = new ServerSocket(puertoFinal);
+                puertoAsignado = puertoFinal;
+
+                Thread hilo = new Thread(() -> {
+                    System.out.println("[HTTP] Servidor de callbacks escuchando en :"
+                            + puertoFinal);
+                    while (true) {
+                        try {
+                            Socket cliente = serverSocket.accept();
+                            new Thread(() -> manejarConexion(cliente)).start();
+                        } catch (Exception e) {
+                            System.out.println("[HTTP] Error aceptando conexión: "
+                                    + e.getMessage());
+                        }
+                    }
+                });
+                hilo.setDaemon(true);
+                hilo.start();
+                return; // salir en cuanto encuentre un puerto libre
+
+            } catch (Exception e) {
+                // Puerto ocupado, intentar el siguiente
+            }
+        }
+        System.out.println("[HTTP] No se encontró puerto disponible entre 8080 y 8089");
     }
 
-    private static void manejarCallback(HttpExchange exchange) {
-        try {
-            if (!"POST".equals(exchange.getRequestMethod())) {
-                exchange.sendResponseHeaders(405, -1);
-                return;
+    private static void manejarConexion(Socket cliente) {
+        try (
+            BufferedReader entrada = new BufferedReader(
+                new InputStreamReader(cliente.getInputStream(), StandardCharsets.UTF_8));
+            OutputStream salida = cliente.getOutputStream()
+        ) {
+            String linea;
+            int contentLength = 0;
+            while (!(linea = entrada.readLine()).isEmpty()) {
+                if (linea.toLowerCase().startsWith("content-length:")) {
+                    contentLength = Integer.parseInt(linea.split(":")[1].trim());
+                }
             }
 
-            InputStream is = exchange.getRequestBody();
-            String cuerpo = new String(is.readAllBytes(), StandardCharsets.UTF_8);
-            System.out.println("[HTTP] Notificación recibida: " + cuerpo);
+            char[] cuerpoChars = new char[contentLength];
+            entrada.read(cuerpoChars, 0, contentLength);
+            String cuerpo = new String(cuerpoChars);
+
+            System.out.println("\n[HTTP] Notificación recibida: " + cuerpo);
 
             String idAudio   = extraerCampoJson(cuerpo, "idAudio");
             String fechaHora = extraerCampoJson(cuerpo, "fechaHoraReproduccion");
 
             RegistroAdministradores.notificarTodos(idAudio, fechaHora);
 
-            exchange.sendResponseHeaders(200, -1);
+            String respuesta = "HTTP/1.1 200 OK\r\nContent-Length: 0\r\n\r\n";
+            salida.write(respuesta.getBytes(StandardCharsets.UTF_8));
+            salida.flush();
+
         } catch (Exception e) {
-            System.out.println("[HTTP] Error procesando callback: " + e.getMessage());
+            System.out.println("[HTTP] Error procesando conexión: " + e.getMessage());
         } finally {
-            exchange.close();
+            try { cliente.close(); } catch (Exception ignored) {}
         }
     }
 
-    // Extrae el valor de un campo string de un JSON simple sin dependencias externas
     private static String extraerCampoJson(String json, String campo) {
         String clave = "\"" + campo + "\":\"";
         int inicio = json.indexOf(clave);

@@ -4,8 +4,8 @@ import (
 	"fmt"
 
 	repo "servidor.local/servidorDeAudios/capaAccesoDatos"
-	"servidor.local/servidorDeAudios/modelos"
 	cola "servidor.local/servidorDeAudios/componenteConexionCola"
+	"servidor.local/servidorDeAudios/modelos"
 )
 
 func ObtenerTipos() []modelos.TipoAudio {
@@ -67,48 +67,89 @@ func ObtenerMetadata(idAudio int) (interface{}, int, error) {
 	}
 }
 func AlmacenarCancion(titulo, artista, genero string, data []byte) (int, error) {
-    fmt.Printf("[Fachada] AlmacenarCancion titulo=%s artista=%s genero=%s\n", titulo, artista, genero)
+	fmt.Printf("[Fachada] AlmacenarCancion titulo=%s artista=%s genero=%s\n", titulo, artista, genero)
 
-    // Paso 1: guardar el archivo MP3 en disco
-    if err := repo.GuardarArchivoFisico(titulo, artista, genero, data); err != nil {
-        return 0, fmt.Errorf("error guardando archivo: %w", err)
-    }
+	// Paso 1: guardar el archivo MP3 en disco
+	if err := repo.GuardarArchivoFisico(titulo, artista, genero, data); err != nil {
+		return 0, fmt.Errorf("error guardando archivo: %w", err)
+	}
 
-    // Paso 2: registrar metadatos en memoria para que el gRPC los sirva
-    nuevaMusica := modelos.Musica{}
-    nuevaMusica.SetTitulo(titulo)
-    nuevaMusica.SetArtistaPrincipal(artista)
-    nuevaMusica.SetGeneroMusical(genero)
-    nuevaMusica.SetAlbum("Sin álbum")
-    nuevaMusica.SetSelloDiscografico("Independiente")
-    nuevaMusica.SetAnioLanzamiento(0)
-    idAsignado := repo.AgregarMusica(nuevaMusica)
+	// Paso 2: registrar metadatos en memoria para que el gRPC los sirva
+	var idAsignado int
 
-    fmt.Printf("[Fachada] Audio registrado en memoria con id=%d\n", idAsignado)
+	if genero == "Musica" {
+		nuevaMusica := modelos.Musica{}
+		nuevaMusica.SetTitulo(titulo)
+		nuevaMusica.SetArtistaPrincipal(artista)
+		nuevaMusica.SetGeneroMusical(genero)
+		nuevaMusica.SetAlbum("Sin álbum")
+		nuevaMusica.SetSelloDiscografico("Independiente")
+		nuevaMusica.SetAnioLanzamiento(0)
+		idAsignado = repo.AgregarMusica(nuevaMusica)
+	} else if genero == "Podcast" {
+		nuevoPodcast := modelos.Podcast{}
+		nuevoPodcast.SetTituloPodcast(titulo)
+		nuevoPodcast.SetTituloEpisodio(titulo + " - Nuevo episodio")
+		nuevoPodcast.SetAnfitrion(artista)
+		nuevoPodcast.SetTemporadaEpisodio("Temporada 1")
+		nuevoPodcast.SetNotasShow("Notas del episodio")
+		nuevoPodcast.SetClasificacionContenido("Sin clasificación")
+		idAsignado = repo.AgregarPodcast(nuevoPodcast)
+	} else if genero == "Audiolibro" {
+		nuevoAudiolibro := modelos.Audiolibro{}
+		nuevoAudiolibro.SetTitulo(titulo)
+		nuevoAudiolibro.SetAutor(artista)
+		nuevoAudiolibro.SetNarrador("Desconocido")
+		nuevoAudiolibro.SetEditorial("Independiente")
+		nuevoAudiolibro.SetIsbn("")
+		nuevoAudiolibro.SetCapitulo("Capítulo 1")
+		idAsignado = repo.AgregarAudiolibro(nuevoAudiolibro)
+	} else if genero == "Ruido Blanco" {
+		nuevoRuidoBlanco := modelos.RuidoBlanco{}
+		nuevoRuidoBlanco.SetTipoSonido(genero)
+		nuevoRuidoBlanco.SetFuenteAudio(artista)
+		nuevoRuidoBlanco.SetUsoSugerido("Relajación y concentración")
+		nuevoRuidoBlanco.SetProveedorContenido("Plataforma Spotify")
+		nuevoRuidoBlanco.SetDuracionBucle(0)
+		nuevoRuidoBlanco.SetFrecuenciaDominante("Continuo")
+		idAsignado = repo.AgregarRuidoBlanco(nuevoRuidoBlanco)
+	}
 
-    // Paso 3: notificar asíncronamente al servidor de correos vía RabbitMQ
-    go publicarEnCola(idAsignado, titulo, artista, genero)
+	fmt.Printf("[Fachada] Audio registrado en memoria con id=%d\n", idAsignado)
 
-    return idAsignado, nil
+	// Paso 3: notificar asíncronamente al servidor de correos vía RabbitMQ
+	go publicarEnCola(idAsignado, titulo, artista, genero)
+
+	return idAsignado, nil
 }
 
 // publicarEnCola crea una conexión RabbitMQ, publica la notificación y la cierra.
 // Se ejecuta en una goroutine para no bloquear la respuesta al Administrador.
 func publicarEnCola(idAudio int, titulo, artista, genero string) {
-    publisher, err := cola.NewRabbitPublisher()
-    if err != nil {
-        fmt.Printf("[Fachada] Error conectando RabbitMQ: %v\n", err)
-        return
-    }
-    defer publisher.Cerrar()
+	publisher, err := cola.NewRabbitPublisher()
+	if err != nil {
+		fmt.Printf("[Fachada] Error conectando RabbitMQ: %v\n", err)
+		return
+	}
+	defer publisher.Cerrar()
 
-    err = publisher.PublicarNotificacion(cola.NotificacionCancion{
-        IdAudio: idAudio,
-        Titulo:  titulo,
-        Artista: artista,
-        Genero:  genero,
-    })
-    if err != nil {
-        fmt.Printf("[Fachada] Error publicando en cola: %v\n", err)
-    }
+	err = publisher.PublicarNotificacion(cola.NotificacionCancion{
+		IdAudio: idAudio,
+		Titulo:  titulo,
+		Artista: artista,
+		Genero:  genero,
+	})
+	if err != nil {
+		fmt.Printf("[Fachada] Error publicando en cola: %v\n", err)
+	}
+
+}
+func ObtenerTodosLosAudios() ([]modelos.ResumenAudio, error) {
+	fmt.Println("[Fachada] ObtenerTodosLosAudios llamado")
+	var todos []modelos.ResumenAudio
+	for idTipo := 1; idTipo <= 4; idTipo++ {
+		audios := repo.ObtenerAudiosPorTipo(idTipo)
+		todos = append(todos, audios...)
+	}
+	return todos, nil
 }

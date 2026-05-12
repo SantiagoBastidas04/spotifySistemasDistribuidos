@@ -1,8 +1,9 @@
 package capaAccesoDatos
 
 import (
-    "servidor.local/servidorDeAudios/modelos"
-    "sync"
+	"sync"
+
+	"servidor.local/servidorDeAudios/modelos"
 )
 
 var tiposAudio = []modelos.TipoAudio{}
@@ -11,8 +12,10 @@ var podcasts = []modelos.Podcast{}
 var audiolibros = []modelos.Audiolibro{}
 var ruidosBlancos = []modelos.RuidoBlanco{}
 var mu sync.Mutex
-var proximoIdMusica = 500
-
+var proximoIdMusica = 103
+var proximoIdPodcast = 203
+var proximoIdAudiolibro = 303
+var proximoIdRuidoBlanco = 403
 
 func init() {
 	cargarTipos()
@@ -212,30 +215,54 @@ func ObtenerRuidoBlanco(idAudio int) (modelos.RuidoBlanco, bool) {
 }
 
 func ObtenerTipoPorAudio(idAudio int) int {
-    if idAudio >= 101 && idAudio <= 199 {
-        return 1
-    }
-    if idAudio >= 201 && idAudio <= 299 {
-        return 2
-    }
-    if idAudio >= 301 && idAudio <= 399 {
-        return 3
-    }
-    if idAudio >= 401 && idAudio <= 499 {
-        return 4
-    }
+	if idAudio >= 101 && idAudio <= 199 {
+		return 1
+	}
+	if idAudio >= 201 && idAudio <= 299 {
+		return 2
+	}
+	if idAudio >= 301 && idAudio <= 399 {
+		return 3
+	}
+	if idAudio >= 401 && idAudio <= 499 {
+		return 4
+	}
 
-    if idAudio >= 500 {
-        return 1
-    }
-    return -1
+	if idAudio >= 500 {
+		return 1
+	}
+	return -1
 }
 
 func AgregarMusica(m modelos.Musica) int {
-    mu.Lock()
-    defer mu.Unlock()
-    proximoIdMusica++
-    m.SetIdAudio(proximoIdMusica)
-    musicas = append(musicas, m)
-    return proximoIdMusica
+	mu.Lock()
+	defer mu.Unlock()
+	proximoIdMusica++
+	m.SetIdAudio(proximoIdMusica)
+	musicas = append(musicas, m)
+	return proximoIdMusica
+}
+func AgregarPodcast(p modelos.Podcast) int {
+	mu.Lock()
+	defer mu.Unlock()
+	proximoIdPodcast++
+	p.SetIdAudio(proximoIdPodcast)
+	podcasts = append(podcasts, p)
+	return proximoIdPodcast
+}
+func AgregarAudiolibro(a modelos.Audiolibro) int {
+	mu.Lock()
+	defer mu.Unlock()
+	proximoIdAudiolibro++
+	a.SetIdAudio(proximoIdAudiolibro)
+	audiolibros = append(audiolibros, a)
+	return proximoIdAudiolibro
+}
+func AgregarRuidoBlanco(r modelos.RuidoBlanco) int {
+	mu.Lock()
+	defer mu.Unlock()
+	proximoIdRuidoBlanco++
+	r.SetIdAudio(proximoIdRuidoBlanco)
+	ruidosBlancos = append(ruidosBlancos, r)
+	return proximoIdRuidoBlanco
 }
