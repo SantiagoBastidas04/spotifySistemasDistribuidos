@@ -12,13 +12,11 @@ public class RegistroAdministradores {
 
     public static synchronized void registrar(CallBackInt callback) {
         administradoresRegistrados.add(callback);
-        System.out.println("[Registro] Administrador registrado. Total activos: "
-                + administradoresRegistrados.size());
+        System.out.println("[Registro] Administrador registrado. Total activos: ");
     }
 
     public static synchronized void notificarTodos(String idAudio, String fechaHoraReproduccion) {
-        System.out.println("[Registro] Notificando a "
-                + administradoresRegistrados.size() + " administrador(es)...");
+        System.out.println("[Registro] Notificando a administrador(es)...");
 
         NotificacionReproduccionDTO dto = new NotificacionReproduccionDTO(idAudio, fechaHoraReproduccion);
 
